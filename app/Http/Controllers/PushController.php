@@ -30,15 +30,13 @@ class PushController extends Controller
     public function test() {
         $subs = PushSubscription::query()->get();
 
-        foreach($subs as $sub) {
-
+        foreach($subs as $inx => $sub) {
             $subscription = Subscription::create([
                 'endpoint'        => $sub->endpoint,
                 'publicKey'       => $sub->p256dh,
                 'authToken'       => $sub->auth,
                 'contentEncoding' => self::ENCODE,
             ]);
-
 
             $webPush = new WebPush([
                 'VAPID' => [
@@ -52,7 +50,7 @@ class PushController extends Controller
                 $subscription,
                 json_encode([
                     'id'    => 1,
-                    'title' => 'test',
+                    'title' => 'test - ' . $inx,
                     'image' => null,
                     'body'  => 'test',
                 ], JSON_THROW_ON_ERROR)
