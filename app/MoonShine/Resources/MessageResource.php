@@ -36,7 +36,7 @@ class MessageResource extends ModelResource
             ID::make()->sortable(),
 
             Text::make('title'),
-            Text::make('content'),
+            Text::make('body'),
             Url::make('link'),
             Image::make('icon')->disk('s3'),
             Image::make('image')->disk('s3'),
@@ -60,7 +60,7 @@ class MessageResource extends ModelResource
                 ID::make(),
 
                 Text::make('title'),
-                Text::make('content'),
+                Text::make('body'),
                 Url::make('link'),
                 Image::make('icon')->disk('s3'),
                 Image::make('image')->disk('s3'),
