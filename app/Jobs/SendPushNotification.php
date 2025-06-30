@@ -51,15 +51,11 @@ class SendPushNotification implements ShouldQueue
             $image = null;
             $icon = null;
 
-            if($this->message->icon) {
+            if($this->message->icon)
                 $icon = Storage::disk('s3')->url($this->message->icon);
-            }
 
-            if(!$icon) {
-                if($this->message->image) {
-                    $image = Storage::disk('s3')->url($this->message->image);
-                }
-            }
+            if($this->message->image)
+                $image = Storage::disk('s3')->url($this->message->image);
 
 
             $report = $webPush->sendOneNotification(
