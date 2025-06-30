@@ -10,7 +10,7 @@ Route::prefix('push')->group(function () {
     Route::post('statistic', [PushController::class, 'statistic']);
 });
 
-Route::prefix('statistic')->group(function() {
+Route::prefix('statistics')->group(function() {
     Route::get('lead', [LeadController::class, 'lead']);
 
 
