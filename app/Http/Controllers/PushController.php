@@ -28,34 +28,37 @@ class PushController extends Controller
      * @throws \ErrorException
      */
     public function test() {
-        $subs = PushSubscription::query()->first();
+        $subs = PushSubscription::query()->get();
 
-        $subscription = Subscription::create([
-            'endpoint' => $subs->endpoint,
-            'publicKey' => $subs->p256dh,
-            'authToken' => $subs->auth,
-            'contentEncoding' => self::ENCODE,
-        ]);
+        foreach($subs as $sub) {
+
+            $subscription = Subscription::create([
+                'endpoint'        => $sub->endpoint,
+                'publicKey'       => $sub->p256dh,
+                'authToken'       => $sub->auth,
+                'contentEncoding' => self::ENCODE,
+            ]);
 
 
-        $webPush = new WebPush([
-            'VAPID' => [
-                'subject' => 'mailto:admin',
-                'publicKey' => config('vapid.public_key'),
-                'privateKey' => config('vapid.private_key'),
-            ],
-        ]);
+            $webPush = new WebPush([
+                'VAPID' => [
+                    'subject'    => 'mailto:admin',
+                    'publicKey'  => config('vapid.public_key'),
+                    'privateKey' => config('vapid.private_key'),
+                ],
+            ]);
 
-        $report = $webPush->sendOneNotification(
-            $subscription,
-            json_encode([
-                'id' => 1,
-                'title' => 'test',
-                'image' => null,
-                'body'  => 'test',
-            ], JSON_THROW_ON_ERROR)
-        );
+            $report = $webPush->sendOneNotification(
+                $subscription,
+                json_encode([
+                    'id'    => 1,
+                    'title' => 'test',
+                    'image' => null,
+                    'body'  => 'test',
+                ], JSON_THROW_ON_ERROR)
+            );
 
+        }
 
         $reason = $report->getReason();
 
