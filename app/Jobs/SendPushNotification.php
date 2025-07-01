@@ -64,13 +64,22 @@ class SendPushNotification implements ShouldQueue
             ],
         ]);
 
-//        $sbscribers = PushSubscription::query()->get();
 
-        foreach ($this->fetchSubscribers($telegramSendMessage) as $subscriber) {
+        $counter = 0;
+        foreach (
+            Subscriber::query()
+                ->select(['id', 'endpoint', 'public_key', 'auth_token'])
+                ->where('country', $this->message->country->value)
+                ->orWhere('geo', $this->message->country->value)
+                ->orderBy('id')
+                ->limit(self::LIMIT)
+                ->get()
+            as $subscriber) {
+            $counter++;
             $subscription = Subscription::create([
                 'endpoint'        => $subscriber->endpoint,
-                'publicKey'       => $subscriber->p256dh,//test$subscriber->public_key,//
-                'authToken'       => $subscriber->auth,//test$subscriber->auth_token,//
+                'publicKey'       => $subscriber->public_key,//,//test$subscriber->public_key,//
+                'authToken'       => $subscriber->auth_token,//,//test$subscriber->auth_token,//
                 'contentEncoding' => self::ENCODE,
             ]);
 
@@ -99,6 +108,10 @@ class SendPushNotification implements ShouldQueue
                 $this->countFailed++;
             }
 
+            if($counter % 100 === 0) {
+                $telegramSendMessage->handle('Success: ' . $this->countSuccess . ' Failed: ' . $this->countFailed . ' Total: ' . $this->countTotal);
+            }
+
             $logger->log($subscriber->id . ' - ' . $report->getReason(), ['file' => 'message-' . $this->message->id]);
         }
 
@@ -112,20 +125,19 @@ class SendPushNotification implements ShouldQueue
     {
         $lastId = 0;
         do {
-            $rows = PushSubscription::query()
-                ->where('id', '>', $lastId)
-                ->limit(1)->orderByDesc('id')->get();
-//            $rows = Subscriber::query()
-//                ->select(['id', 'endpoint', 'public_key', 'auth_token'])
-//                ->where('country', $this->message->country->value)
-////                ->orWhere('geo', $this->message->country->value)
+//            $rows = PushSubscription::query()
 //                ->where('id', '>', $lastId)
-//                ->orderBy('id')
-//                ->limit(self::LIMIT)
-//                ->get();
+//                ->limit(1)->orderByDesc('id')->get();
+            $rows = Subscriber::query()
+                ->select(['id', 'endpoint', 'public_key', 'auth_token'])
+                ->where('country', $this->message->country->value)
+//                ->orWhere('geo', $this->message->country->value)
+                ->where('id', '>', $lastId)
+                ->orderBy('id')
+                ->limit(self::LIMIT)
+                ->get();
 
             $lastId = $rows->max('id');
-
             foreach ($rows as $row) {
                 yield $row;
             }
