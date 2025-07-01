@@ -54,7 +54,6 @@ class SenderPushNotificationJob implements ShouldQueue
             } else {
                 $countFail++;
             }
-            break;
         }
 
         $this->telegramSendMessage->handle(<<<HTML
