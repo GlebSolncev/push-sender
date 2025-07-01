@@ -64,14 +64,13 @@ class SendPushNotification implements ShouldQueue
             ],
         ]);
 
-        $sbscribers = PushSubscription::query()->get();
+//        $sbscribers = PushSubscription::query()->get();
 
-        //$this->fetchSubscribers($telegramSendMessage)
-        foreach ($sbscribers as $subscriber) {
+        foreach ($this->fetchSubscribers($telegramSendMessage) as $subscriber) {
             $subscription = Subscription::create([
                 'endpoint'        => $subscriber->endpoint,
-                'publicKey'       => $subscriber->p256dh,//$subscriber->public_key,
-                'authToken'       => $subscriber->auth,//$subscriber->auth_token,
+                'publicKey'       => $subscriber->public_key,//$subscriber->p256dh,//test
+                'authToken'       => $subscriber->auth_token,//$subscriber->auth,//test
                 'contentEncoding' => self::ENCODE,
             ]);
 
