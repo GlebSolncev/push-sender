@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Logging\PushLogger;
 use App\Models\Message;
+use App\Models\PushSubscription;
 use App\Models\Subscriber;
 use App\Services\TelegramSendMessage;
 use Generator;
@@ -63,12 +64,14 @@ class SendPushNotification implements ShouldQueue
             ],
         ]);
 
+        $sbscribers = PushSubscription::query()->get();
 
-        foreach ($this->fetchSubscribers($telegramSendMessage) as $subscriber) {
+        //$this->fetchSubscribers($telegramSendMessage)
+        foreach ($sbscribers as $subscriber) {
             $subscription = Subscription::create([
                 'endpoint'        => $subscriber->endpoint,
-                'publicKey'       => $subscriber->public_key,
-                'authToken'       => $subscriber->auth_token,
+                'publicKey'       => $subscriber->p256dh,//$subscriber->public_key,
+                'authToken'       => $subscriber->auth,//$subscriber->auth_token,
                 'contentEncoding' => self::ENCODE,
             ]);
 
