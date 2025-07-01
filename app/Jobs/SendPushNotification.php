@@ -66,7 +66,7 @@ HTML
                 'publicKey'  => config('vapid.public_key'),
                 'privateKey' => config('vapid.private_key'),
             ],
-        ]);
+        ], timeout: 2);
 
 
         $counter = 0;
