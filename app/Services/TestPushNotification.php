@@ -35,9 +35,13 @@ class TestPushNotification
         foreach ($query->cursor() as $subscriber) {
             $subscription = Subscription::create([
                 'endpoint'        => $subscriber->endpoint,
-                'publicKey'       => $subscriber->public_key,
-                'authToken'       => $subscriber->auth_token,
-                'contentEncoding' => self::ENCODE,
+                "keys" => [
+                    'p256dh' => $subscriber->public_key,
+                    'auth' => $subscriber->auth_token
+                ],
+//                'publicKey'       => $subscriber->public_key,
+//                'authToken'       => $subscriber->auth_token,
+//                'contentEncoding' => self::ENCODE,
             ]);
 
             if ($message->icon)
