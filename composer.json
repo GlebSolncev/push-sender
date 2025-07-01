@@ -16,6 +16,7 @@
     "league/flysystem-aws-s3-v3": "^3.29",
     "minishlink/web-push": "^9.0",
     "moonshine/moonshine": "^3.14",
+    "nutgram/laravel": "^1.5",
     "paragonie/sodium_compat": "^2.1",
     "phpseclib/phpseclib": "3",
     "web-token/jwt-framework": "^4.0"

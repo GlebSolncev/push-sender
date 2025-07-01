@@ -8,6 +8,8 @@ use App\Enums\CountriesEnum;
 use App\Enums\PlatformsEnum;
 use App\Jobs\SendPushNotification;
 use App\Models\Message;
+use App\Models\Subscriber;
+use Illuminate\Support\Facades\DB;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Resources\ModelResource;
@@ -38,8 +40,8 @@ class MessageResource extends ModelResource
             Text::make('title'),
             Text::make('body'),
             Url::make('link'),
-            Image::make('icon')->disk('s3'),
-            Image::make('image')->disk('s3'),
+            Image::make('icon')->disk('public'),
+            Image::make('image')->disk('public'),
 
             Enum::make('platform')->attach(PlatformsEnum::class),
             Enum::make('country')->attach(CountriesEnum::class),
@@ -62,11 +64,11 @@ class MessageResource extends ModelResource
                 Text::make('title'),
                 Text::make('body'),
                 Url::make('link'),
-                Image::make('icon')->disk('s3'),
-                Image::make('image')->disk('s3'),
+                Image::make('icon')->disk('public'),
+                Image::make('image')->disk('public'),
 
-                Enum::make('platform')->attach(PlatformsEnum::class),
-                Enum::make('country')->attach(CountriesEnum::class),
+                Enum::make('platform')->attach(PlatformsEnum::class)->searchable(),
+                Enum::make('country')->attach(CountriesEnum::class)->searchable(),
             ])
         ];
     }
@@ -93,13 +95,15 @@ class MessageResource extends ModelResource
     }
 
 
-    protected function afterCreated(mixed $item): mixed {
+    protected function afterCreated(mixed $item): mixed
+    {
         SendPushNotification::dispatch($item)->onQueue('send-push-notification');
 
         return $item;
     }
 
-    protected function afterUpdated(mixed $item): mixed {
+    protected function afterUpdated(mixed $item): mixed
+    {
         SendPushNotification::dispatch($item)->onQueue('send-push-notification');
 
         return $item;
