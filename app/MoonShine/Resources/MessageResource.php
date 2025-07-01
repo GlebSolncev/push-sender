@@ -12,6 +12,7 @@ use App\Models\Subscriber;
 use App\Services\TestPushNotification;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use MoonShine\Contracts\UI\ActionButtonContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Resources\ModelResource;
@@ -114,16 +115,21 @@ class MessageResource extends ModelResource
 
         return $item;
     }
-
     protected function formBuilderButtons(): ListOf
     {
-        return parent::formBuilderButtons()
-            ->add(
+        $buttons = parent::formBuilderButtons();
+
+        if($this->item->id ?? null) {
+            $buttons->add(
                 ActionButton::make('Test', '/api/push/test/' . $this->item->id)
                     ->async()
                     ->inModal(
                         title: fn() => 'Test push notification example',
                     )
             );
+        }
+
+        return $buttons;
+
     }
 }
