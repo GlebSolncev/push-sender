@@ -45,7 +45,7 @@ class TestPushNotification
             if ($message->image)
                 $image = Storage::disk('public')->url($message->image);
 
-            $report = $webPush->sendOneNotification(
+            $webPush->queueNotification(
                 $subscription,
                 json_encode([
                     'title' => $message->title,
@@ -58,6 +58,27 @@ class TestPushNotification
                     ],
                 ], JSON_THROW_ON_ERROR)
             );
+
+//            $report = $webPush->sendOneNotification(
+//                $subscription,
+//                json_encode([
+//                    'title' => $message->title,
+//                    'icon'  => $icon,
+//                    'image' => $image,
+//                    'body'  => $message->body,
+//                    'data'  => [
+//                        'url' => $message->link . '?id=' . $subscriber->id . '&msg_id=' . $message->id,
+//                        'id'  => 1,
+//                    ],
+//                ], JSON_THROW_ON_ERROR)
+//            );
+
+//            if($report->isSuccess()) $success++;
+//            else $fail++;
+        }
+
+        foreach ($webPush->flush() as $report) {
+            $endpoint = $report->getRequest()->getUri()->__toString();
 
             if($report->isSuccess()) $success++;
             else $fail++;
