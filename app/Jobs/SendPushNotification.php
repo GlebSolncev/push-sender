@@ -104,31 +104,35 @@ HTML
                     ],
                 ], JSON_THROW_ON_ERROR)
             );
+
+            dd(
+                $webPush
+            );
         }
 
-        foreach ($webPush->flush() as $report) {
-            $report->getRequest()->getUri()->__toString();
-
-            if ($report->isSuccess()) {
-                $this->countSuccess++;
-            } else {
-                $this->countFailed++;
-            }
-
-            $logger->log($subscriber->id . ' - ' . $report->getReason(), ['file' => 'message-' . $this->message->id]);
-
-            if ($counter % 400 === 0) {
-                $this->telegramSendMessage->handle(<<<HTML
-                    <b>Status pack</b>
-                    Message: <b>{$this->message->title}</b>
-                    Success: <b>{$this->countSuccess}</b>
-                    Failes: <b>{$this->countFailed}</b>
-                    Total: <b>{$this->countTotal}</b>
-                HTML
-                );
-            }
-
-        }
+//        foreach ($webPush->flush() as $report) {
+//            $report->getRequest()->getUri()->__toString();
+//
+//            if ($report->isSuccess()) {
+//                $this->countSuccess++;
+//            } else {
+//                $this->countFailed++;
+//            }
+//
+//            $logger->log($subscriber->id . ' - ' . $report->getReason(), ['file' => 'message-' . $this->message->id]);
+//
+//            if ($counter % 400 === 0) {
+//                $this->telegramSendMessage->handle(<<<HTML
+//                    <b>Status pack</b>
+//                    Message: <b>{$this->message->title}</b>
+//                    Success: <b>{$this->countSuccess}</b>
+//                    Failes: <b>{$this->countFailed}</b>
+//                    Total: <b>{$this->countTotal}</b>
+//                HTML
+//                );
+//            }
+//
+//        }
 
         $this->telegramSendMessage->handle(<<<HTML
             <b>Finish sent</b>

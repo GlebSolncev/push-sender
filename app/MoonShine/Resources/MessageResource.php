@@ -6,8 +6,11 @@ namespace App\MoonShine\Resources;
 
 use App\Enums\CountriesEnum;
 use App\Enums\PlatformsEnum;
+use App\Enums\StatisticQueueStatusEnum;
+use App\Jobs\PreparePushNotificationJob;
 use App\Jobs\SendPushNotification;
 use App\Models\Message;
+use App\Models\Statistic\StatisticQueue;
 use App\Models\Subscriber;
 use App\Services\TestPushNotification;
 use Illuminate\Support\Facades\App;
@@ -104,14 +107,23 @@ class MessageResource extends ModelResource
 
     protected function afterCreated(mixed $item): mixed
     {
-        SendPushNotification::dispatch($item)->onQueue('send-push-notification');
+//        SendPushNotification::dispatch($item)->onQueue('send-push-notification');
+        StatisticQueue::query()->insertOrIgnore([
+            'message_id' => $item->id
+        ]);
+        PreparePushNotificationJob::dispatch($item)->onQueue('prepare-push-notification');
 
         return $item;
     }
 
     protected function afterUpdated(mixed $item): mixed
     {
-        SendPushNotification::dispatch($item)->onQueue('send-push-notification');
+//        SendPushNotification::dispatch($item)->onQueue('send-push-notification');
+        StatisticQueue::query()->insertOrIgnore([
+            'message_id' => $item->id,
+            'status' => StatisticQueueStatusEnum::START
+        ]);
+        PreparePushNotificationJob::dispatch($item)->onQueue('prepare-push-notification');
 
         return $item;
     }
