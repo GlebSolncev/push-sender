@@ -8,4 +8,5 @@ Route::get('/', function () {
     return redirect()->to('admin');
 });
 
+Route::get('/checkkkkkk', fn() => view('welcome'));
 Route::get('/test', [PushController::class, 'test']);
