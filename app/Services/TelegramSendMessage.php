@@ -18,7 +18,8 @@ class TelegramSendMessage
         try {
             $this->nutgram->sendMessage(
                 text: $message,
-                chat_id: self::CHAT_ID
+                chat_id: self::CHAT_ID,
+                parse_mode: 'HTML'
             );
         } catch (\Throwable $exception) {
             Log::error($exception->getMessage());

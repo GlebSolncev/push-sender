@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('push_subscriptions', function (Blueprint $table) {
             $table->id();
             $table->string('endpoint', 200);
-            $table->string('p256dh');
-            $table->string('auth');
+            $table->string('public_key');
+            $table->string('auth_token');
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->text('user_agent')->nullable();
             $table->string('ip_address', 45)->nullable();
