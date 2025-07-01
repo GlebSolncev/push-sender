@@ -19,6 +19,7 @@
     "nutgram/laravel": "^1.5",
     "paragonie/sodium_compat": "^2.1",
     "phpseclib/phpseclib": "3",
+    "predis/predis": "*",
     "web-token/jwt-framework": "^4.0"
   },
   "require-dev": {
