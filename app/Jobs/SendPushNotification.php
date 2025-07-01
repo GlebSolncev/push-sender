@@ -57,7 +57,8 @@ Message: <b>{$this->message->title}</b>
 Count subscribers: <b>{$this->countTotal}</b>
 
 <a href="https://pushification.online/admin/resource/message-resource/form-page/{$this->message->id}">Form page</a>
-HTML);
+HTML
+        );
 
         $webPush = new WebPush([
             'VAPID' => [
@@ -72,42 +73,71 @@ HTML);
         foreach ($query->cursor() as $subscriber) {
             $counter++;
 
-            if($counter % 100 === 0) {
-                $this->telegramSendMessage->handle(<<<HTML
-                    Message: <b>{$this->message->title}</b>
-                    Success: <b>{$this->countSuccess}</b>
-                    Failed: <b>{$this->countFailed}</b>
-                    Total: <b>{$this->countTotal}</b>
-                HTML);
-            }
-            $report = $this->send($subscriber, $webPush);
+//            $this->send($subscriber, $webPush);
+            $subscription = Subscription::create([
+                'endpoint' => $subscriber->endpoint,
+                "keys"     => [
+                    'p256dh' => $subscriber->public_key,
+                    'auth'   => $subscriber->auth_token
+                ],
+//            'publicKey'       => $subscriber->public_key,
+//            'authToken'       => $subscriber->auth_token,
+//            'contentEncoding' => self::ENCODE,
+            ]);
 
-            if($report->isSuccess()){
+            if ($this->message->icon)
+                $icon = Storage::disk('public')->url($this->message->icon);
+            if ($this->message->image)
+                $image = Storage::disk('public')->url($this->message->image);
+
+//        return $webPush->sendOneNotification(
+            $webPush->queueNotification(
+                $subscription,
+                json_encode([
+                    'title' => $this->message->title,
+                    'icon'  => $icon,
+                    'image' => $image,
+                    'body'  => $this->message->body,
+                    'data'  => [
+                        'url' => $this->message->link . '?id=' . $subscriber->id . '&msg_id=' . $this->message->id,
+                        'id'  => 1,
+                    ],
+                ], JSON_THROW_ON_ERROR)
+            );
+        }
+
+        foreach ($webPush->flush() as $report) {
+            $report->getRequest()->getUri()->__toString();
+
+            if ($report->isSuccess()) {
                 $this->countSuccess++;
-            }else{
+            } else {
                 $this->countFailed++;
             }
 
             $logger->log($subscriber->id . ' - ' . $report->getReason(), ['file' => 'message-' . $this->message->id]);
 
-            if($counter % 200 === 0) {
+            if ($counter % 400 === 0) {
                 $this->telegramSendMessage->handle(<<<HTML
-        <b>Status pack</b>
-        Message: <b>{$this->message->title}</b>
-        Success: <b>{$this->countSuccess}</b>
-        Failes: <b>{$this->countFailed}</b>
-        Total: <b>{$this->countTotal}</b>
-    HTML);
+                    <b>Status pack</b>
+                    Message: <b>{$this->message->title}</b>
+                    Success: <b>{$this->countSuccess}</b>
+                    Failes: <b>{$this->countFailed}</b>
+                    Total: <b>{$this->countTotal}</b>
+                HTML
+                );
             }
+
         }
 
         $this->telegramSendMessage->handle(<<<HTML
-        <b>Finish sent</b>
-        Message: <b>{$this->message->title}</b>
-        Success: <b>{$this->countSuccess}</b>
-        Failes: <b>{$this->countFailed}</b>
-        Total: <b>{$this->countTotal}</b>
-    HTML);
+            <b>Finish sent</b>
+            Message: <b>{$this->message->title}</b>
+            Success: <b>{$this->countSuccess}</b>
+            Failes: <b>{$this->countFailed}</b>
+            Total: <b>{$this->countTotal}</b>
+        HTML
+        );
 
         return false;
     }
@@ -115,10 +145,14 @@ HTML);
     protected function send($subscriber, $webPush): MessageSentReport
     {
         $subscription = Subscription::create([
-            'endpoint'        => $subscriber->endpoint,
-            'publicKey'       => $subscriber->public_key,
-            'authToken'       => $subscriber->auth_token,
-            'contentEncoding' => self::ENCODE,
+            'endpoint' => $subscriber->endpoint,
+            "keys"     => [
+                'p256dh' => $subscriber->public_key,
+                'auth'   => $subscriber->auth_token
+            ],
+//            'publicKey'       => $subscriber->public_key,
+//            'authToken'       => $subscriber->auth_token,
+//            'contentEncoding' => self::ENCODE,
         ]);
 
         if ($this->message->icon)
@@ -126,7 +160,8 @@ HTML);
         if ($this->message->image)
             $image = Storage::disk('public')->url($this->message->image);
 
-        return $webPush->sendOneNotification(
+//        return $webPush->sendOneNotification(
+       return $webPush->queueNotification(
             $subscription,
             json_encode([
                 'title' => $this->message->title,
