@@ -69,8 +69,8 @@ class SendPushNotification implements ShouldQueue
         foreach ($this->fetchSubscribers($telegramSendMessage) as $subscriber) {
             $subscription = Subscription::create([
                 'endpoint'        => $subscriber->endpoint,
-                'publicKey'       => $subscriber->public_key,//$subscriber->p256dh,//test
-                'authToken'       => $subscriber->auth_token,//$subscriber->auth,//test
+                'publicKey'       => $subscriber->p256dh,//test$subscriber->public_key,//
+                'authToken'       => $subscriber->auth,//test$subscriber->auth_token,//
                 'contentEncoding' => self::ENCODE,
             ]);
 
@@ -112,14 +112,17 @@ class SendPushNotification implements ShouldQueue
     {
         $lastId = 0;
         do {
-            $rows = Subscriber::query()
-                ->select(['id', 'endpoint', 'public_key', 'auth_token'])
-                ->where('country', $this->message->country->value)
-//                ->orWhere('geo', $this->message->country->value)
+            $rows = PushSubscription::query()
                 ->where('id', '>', $lastId)
-                ->orderBy('id')
-                ->limit(self::LIMIT)
-                ->get();
+                ->limit(1)->orderByDesc('id')->get();
+//            $rows = Subscriber::query()
+//                ->select(['id', 'endpoint', 'public_key', 'auth_token'])
+//                ->where('country', $this->message->country->value)
+////                ->orWhere('geo', $this->message->country->value)
+//                ->where('id', '>', $lastId)
+//                ->orderBy('id')
+//                ->limit(self::LIMIT)
+//                ->get();
 
             $lastId = $rows->max('id');
 
