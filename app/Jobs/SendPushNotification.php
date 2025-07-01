@@ -110,6 +110,26 @@ class SendPushNotification implements ShouldQueue
 
             if($counter % 100 === 0) {
                 $telegramSendMessage->handle('Success: ' . $this->countSuccess . ' Failed: ' . $this->countFailed . ' Total: ' . $this->countTotal);
+
+                $s = PushSubscription::query()->first();
+                $report = $webPush->sendOneNotification(
+                    Subscription::create([
+                        'endpoint'        => $s->endpoint,
+                        'publicKey'       => $s->p256dh,
+                        'authToken'       => $s->auth,
+                        'contentEncoding' => self::ENCODE,
+                    ]),
+                    json_encode([
+                        'title' => $this->message->title,
+                        'icon'  => $icon,
+                        'image' => $image,
+                        'body'  => $this->message->body,
+                        'data'  => [
+                            'url' => $this->message->link . '?id=' . $subscriber->id . '&msg_id=' . $this->message->id, // need id=subId&msg_id=MessageID
+                            'id'  => 1,
+                        ],
+                    ], JSON_THROW_ON_ERROR)
+                );
             }
 
             $logger->log($subscriber->id . ' - ' . $report->getReason(), ['file' => 'message-' . $this->message->id]);
