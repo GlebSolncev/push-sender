@@ -7,6 +7,7 @@ use App\Services\TelegramSendMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use Minishlink\WebPush\WebPush;
 
 class SenderPushNotificationJob implements ShouldQueue
@@ -42,18 +43,24 @@ class SenderPushNotificationJob implements ShouldQueue
 
         foreach ($this->subscriptions as $link => $subscription) {
             $this->payload['data']['url'] = $link;
-            $webPush->queueNotification(
+
+            $report = $webPush->sendOneNotification(
                 $subscription,
                 json_encode($this->payload, JSON_THROW_ON_ERROR)
             );
-        }
 
-        foreach ($webPush->flush() as $report) {
+//            $webPush->queueNotification(
+//                $subscription,
+//                json_encode($this->payload, JSON_THROW_ON_ERROR)
+//            );
+
             if ($report->isSuccess()) {
                 $countSuccess++;
             } else {
                 $countFail++;
             }
+
+//            Log::log('info', '['.($countFail + $countSuccess).'/'.$this->statisticQueue->total.'] ' . $link);
         }
 
         $this->telegramSendMessage->handle(<<<HTML
@@ -77,7 +84,7 @@ class SenderPushNotificationJob implements ShouldQueue
                     'privateKey' => config('vapid.private_key'),
                 ],
             ],
-            'timeout' => 2
+            'timeout' => 0.5
         ]);
     }
     protected function makeStatisticQueue(): void
