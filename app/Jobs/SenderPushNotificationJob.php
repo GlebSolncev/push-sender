@@ -60,7 +60,7 @@ class SenderPushNotificationJob implements ShouldQueue
                 $countFail++;
             }
 
-//            Log::log('info', '['.($countFail + $countSuccess).'/'.$this->statisticQueue->total.'] ' . $link);
+            Log::log('info', '['.($countFail + $countSuccess).'/'.$this->statisticQueue->total.'] ' . $link);
         }
 
         $this->telegramSendMessage->handle(<<<HTML
