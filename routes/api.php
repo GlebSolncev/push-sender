@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('push')->group(function () {
     Route::post('subscribe', [PushController::class, 'subscribe']);
-
-    Route::get('test/{id}', [PushController::class, 'test']);
 });
 
 Route::prefix('statistics')->group(function() {

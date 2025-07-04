@@ -6,21 +6,17 @@ namespace App\MoonShine\Resources;
 
 use App\Enums\CountriesEnum;
 use App\Enums\PlatformsEnum;
+use App\Enums\PrepareQueryTypesEnum;
 use App\Enums\StatisticQueueStatusEnum;
 use App\Jobs\PreparePushNotificationJob;
-use App\Jobs\SendPushNotification;
 use App\Models\Message;
 use App\Models\Statistic\StatisticQueue;
-use App\Models\Subscriber;
-use App\Services\TestPushNotification;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
-use MoonShine\Contracts\UI\ActionButtonContract;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
+use MoonShine\Laravel\Http\Responses\MoonShineJsonResponse;
+use MoonShine\Laravel\MoonShineRequest;
 use MoonShine\Laravel\Resources\ModelResource;
-use MoonShine\Support\AlpineJs;
-use MoonShine\Support\Enums\JsEvent;
+use MoonShine\Support\Enums\ToastType;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Layout\Box;
@@ -107,25 +103,23 @@ class MessageResource extends ModelResource
 
     protected function afterCreated(mixed $item): mixed
     {
-//        SendPushNotification::dispatch($item)->onQueue('send-push-notification');
-        StatisticQueue::query()->insertOrIgnore([
-            'message_id' => $item->id
-        ]);
-        PreparePushNotificationJob::dispatch($item)->onQueue('prepare-push-notification');
+        $this->dispatchPush($item);
 
         return $item;
     }
 
     protected function afterUpdated(mixed $item): mixed
     {
-//        SendPushNotification::dispatch($item)->onQueue('send-push-notification');
-        StatisticQueue::query()->insertOrIgnore([
-            'message_id' => $item->id,
-            'status' => StatisticQueueStatusEnum::START
-        ]);
-        PreparePushNotificationJob::dispatch($item)->onQueue('prepare-push-notification');
+        $this->dispatchPush($item);
 
         return $item;
+    }
+
+    private function dispatchPush(mixed $item): void
+    {
+        StatisticQueue::query()->insertOrIgnore(['message_id' => $item->id]);
+        PreparePushNotificationJob::dispatch($item, PrepareQueryTypesEnum::REGULAR)
+            ->onQueue('prepare-push-notification');
     }
     protected function formBuilderButtons(): ListOf
     {
@@ -133,15 +127,24 @@ class MessageResource extends ModelResource
 
         if($this->item->id ?? null) {
             $buttons->add(
-                ActionButton::make('Test', '/api/push/test/' . $this->item->id)
-                    ->async()
-                    ->inModal(
-                        title: fn() => 'Test push notification example',
-                    )
+                ActionButton::make('Link')->method('previewPush', ['id' => $this->item->id])
             );
         }
 
         return $buttons;
+
+    }
+
+
+    public function previewPush(MoonShineRequest $request){
+        $messageId = $request->get('id');
+
+        $message = Message::query()->find($messageId);
+        StatisticQueue::query()->insertOrIgnore(['message_id' => $messageId]);
+        PreparePushNotificationJob::dispatch($message, PrepareQueryTypesEnum::PREVIEW)
+            ->onQueue('prepare-push-notification');
+
+        return MoonShineJsonResponse::make()->toast('Start preview push notification', ToastType::SUCCESS);
 
     }
 }

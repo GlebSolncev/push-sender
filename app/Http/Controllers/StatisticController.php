@@ -33,7 +33,7 @@ class StatisticController extends Controller
             $telegramMessage->handle('Open page, info: '. json_encode($request->all()));
         }catch (\Exception $exception){
             $json = json_encode($request->all());
-            Log::error($exception->getMessage() . ' -=-' . $json);
+            Log::error('[ERROR]' . $exception->getMessage() . ' -|- ' . $json);
             $telegramMessage->handle('Error open page' . $json . ' | ' . $exception->getMessage());
 
             return false;

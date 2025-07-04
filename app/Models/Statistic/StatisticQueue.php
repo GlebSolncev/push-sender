@@ -17,6 +17,9 @@ class StatisticQueue extends Model
         'total',
     ];
 
+    public $incrementing = false;
+
+
     protected $primaryKey = 'message_id';
 
     protected $casts = [

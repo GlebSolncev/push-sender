@@ -4,9 +4,11 @@ namespace App\Jobs;
 
 use App\Models\Statistic\StatisticQueue;
 use App\Services\TelegramSendMessage;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Minishlink\WebPush\WebPush;
 
@@ -23,10 +25,9 @@ class SenderPushNotificationJob implements ShouldQueue
         protected int $messageId,
         protected array $subscriptions,
         protected array $payload,
-        protected int $step
+        protected string $step
     ) {
         $this->telegramSendMessage = App::make(TelegramSendMessage::class);
-
     }
 
     /**
@@ -80,22 +81,27 @@ class SenderPushNotificationJob implements ShouldQueue
 
     protected function updateCounters(int $success, int $fail): void
     {
-        StatisticQueue::query()
-            ->where('message_id', $this->messageId)
-            ->increment('success', $success);
+        DB::beginTransaction();
+        try {
 
-        StatisticQueue::query()
-            ->where('message_id', $this->messageId)
-            ->increment('failed', $fail);
+            $row = StatisticQueue::where('message_id', $this->messageId)
+                ->lockForUpdate()
+                ->first();
 
-        $model = StatisticQueue::query()
-            ->where('message_id', $this->messageId);
+            $row->success += $success;
+            $row->failed += $fail;
+            $row->save();
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::error($exception->getMessage());
+        }
 
         $this->telegramSendMessage->handle(<<<HTML
             <b>Finish STEP {$this->step}</b>
-            Success: <b>{$model->success}</b>
-            Failes: <b>{$model->failed}</b>
-            Total: <b>{$model->total}</b>
+            Success: <b>{$row->success}</b>
+            Failes: <b>{$row->failed}</b>
+            Total: <b>{$row->total}</b>
         HTML
         );
     }
