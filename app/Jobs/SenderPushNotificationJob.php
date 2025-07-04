@@ -14,8 +14,6 @@ class SenderPushNotificationJob implements ShouldQueue
 {
     use Queueable;
 
-    protected ?StatisticQueue $statisticQueue = null;
-
     protected TelegramSendMessage $telegramSendMessage;
 
     /**
@@ -33,13 +31,13 @@ class SenderPushNotificationJob implements ShouldQueue
 
     /**
      * Execute the job.
+     * @throws \JsonException|\ErrorException
      */
     public function handle(): void
     {
-        $this->makeStatisticQueue();
         $webPush = $this->getWebPushInstance();
-        $countSuccess = $this->statisticQueue->success;
-        $countFail = $this->statisticQueue->failed;
+        $countSuccess = 0;
+        $countFail = 0;
 
         foreach ($this->subscriptions as $link => $subscription) {
             $this->payload['data']['url'] = $link;
@@ -56,20 +54,12 @@ class SenderPushNotificationJob implements ShouldQueue
 
             if ($report->isSuccess()) {
                 $countSuccess++;
+                Log::log('info', '[TRUE] ' . $link);
             } else {
                 $countFail++;
+                Log::log('info', '[FALSE] ' . $link);
             }
-
-            Log::log('info', '['.($countFail + $countSuccess).'/'.$this->statisticQueue->total.'] ' . $link);
         }
-
-        $this->telegramSendMessage->handle(<<<HTML
-            <b>Finish STEP {$this->step}</b>
-            Success: <b>{$countSuccess}</b>
-            Failes: <b>{$countFail}</b>
-            Total: <b>{$this->statisticQueue->total}</b>
-        HTML
-        );
 
         $this->updateCounters($countSuccess, $countFail);
     }
@@ -79,7 +69,7 @@ class SenderPushNotificationJob implements ShouldQueue
         return App::make(WebPush::class, [
             'auth'    => [
                 'VAPID' => [
-                    'subject'    => 'mailto:admin',
+                    'subject'    => 'mailto:yamokasy2@gmail.com',
                     'publicKey'  => config('vapid.public_key'),
                     'privateKey' => config('vapid.private_key'),
                 ],
@@ -87,16 +77,26 @@ class SenderPushNotificationJob implements ShouldQueue
             'timeout' => 0.5
         ]);
     }
-    protected function makeStatisticQueue(): void
-    {
-        $this->statisticQueue = StatisticQueue::query()->find($this->messageId);
-    }
 
     protected function updateCounters(int $success, int $fail): void
     {
-        $this->statisticQueue->success = $success;
-        $this->statisticQueue->failed = $fail;
+        StatisticQueue::query()
+            ->where('message_id', $this->messageId)
+            ->increment('success', $success);
 
-        $this->statisticQueue->save();
+        StatisticQueue::query()
+            ->where('message_id', $this->messageId)
+            ->increment('failed', $fail);
+
+        $model = StatisticQueue::query()
+            ->where('message_id', $this->messageId);
+
+        $this->telegramSendMessage->handle(<<<HTML
+            <b>Finish STEP {$this->step}</b>
+            Success: <b>{$model->success}</b>
+            Failes: <b>{$model->failed}</b>
+            Total: <b>{$model->total}</b>
+        HTML
+        );
     }
 }
