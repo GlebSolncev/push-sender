@@ -14,12 +14,9 @@ class PushLogger
         $this->logger = new Logger('context');
     }
 
-    public function log(string $message, array $context = [], string $level = 'debug'): void
+    public function log(string $message, int $messageId, array $context = [], string $level = 'debug'): void
     {
-        $fileKey = $context['file'] ?? 'default';
-        unset($context['file']);
-        $path = storage_path("logs/{$fileKey}.log");
-
+        $path = storage_path('logs/message-' . $messageId . '.log');
         $handler = new StreamHandler($path);
         $this->logger->setHandlers([$handler]);
 

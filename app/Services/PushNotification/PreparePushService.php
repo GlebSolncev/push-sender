@@ -4,6 +4,7 @@ namespace App\Services\PushNotification;
 
 use App\Enums\PrepareQueryTypesEnum;
 use App\Jobs\SenderPushNotificationJob;
+use App\Logging\PushLogger;
 use App\Models\Message;
 use App\Models\Statistic\StatisticQueue;
 use App\Services\PushNotification\DTO\PayloadPrepareDTO;
@@ -13,7 +14,6 @@ use App\Services\PushNotification\ValueObjects\SubscriberLink;
 use App\Services\TelegramSendMessage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
-use League\CommonMark\Input\MarkdownInput;
 use Minishlink\WebPush\Subscription;
 
 class PreparePushService
@@ -21,7 +21,8 @@ class PreparePushService
     const CHUNK = 1000;
 
     public function __construct(
-        private readonly TelegramSendMessage $telegramSendMessage
+        private readonly TelegramSendMessage $telegramSendMessage,
+        private readonly PushLogger $logger,
     ) {}
 
     public function handle(PrepareQueryTypesEnum $typeEnum, Message $message): void
@@ -31,6 +32,7 @@ class PreparePushService
         $total = $query->count();
         $this->updateStatisticQueue($message->id, $total);
         $this->telegramMessage($message, $total);
+        $this->logger->log('Start. Total: ' . $total, $message->id);
 
         $counter = 0;
         $step = 0;

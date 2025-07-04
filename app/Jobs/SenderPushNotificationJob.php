@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Logging\PushLogger;
 use App\Models\Statistic\StatisticQueue;
 use App\Services\TelegramSendMessage;
 use Exception;
@@ -34,7 +35,7 @@ class SenderPushNotificationJob implements ShouldQueue
      * Execute the job.
      * @throws \JsonException|\ErrorException
      */
-    public function handle(): void
+    public function handle(PushLogger $logger): void
     {
         $webPush = $this->getWebPushInstance();
         $countSuccess = 0;
@@ -55,10 +56,10 @@ class SenderPushNotificationJob implements ShouldQueue
 
             if ($report->isSuccess()) {
                 $countSuccess++;
-                Log::log('info', '[TRUE] ' . $link);
+                $logger->log('[TRUE] ' . $link, $this->messageId, ['res' => $report->getReason()]);
             } else {
                 $countFail++;
-                Log::log('info', '[FALSE] ' . $link);
+                $logger->log('[FALSE] ' . $link, $this->messageId, ['res' => $report->getReason()]);
             }
         }
 
@@ -100,7 +101,7 @@ class SenderPushNotificationJob implements ShouldQueue
         $this->telegramSendMessage->handle(<<<HTML
             <b>Finish STEP {$this->step}</b>
             Success: <b>{$row->success}</b>
-            Failes: <b>{$row->failed}</b>
+            Failed: <b>{$row->failed}</b>
             Total: <b>{$row->total}</b>
         HTML
         );
