@@ -23,15 +23,25 @@ class SubscriberByCountryResource extends ModelResource
     protected string $model = Subscriber::class;
 
     protected string $title = 'by countries';
+    protected string $searchQueryKey = 'country';
 
-    protected function modifyQueryBuilder(Builder $builder): Builder {
-        return $builder
+    protected int $itemsPerPage = 500;
+
+    protected function modifyQueryBuilder(Builder $builder): Builder
+    {
+        $q = $builder
             ->select([
                 DB::raw('max(id) as id'),
                 'country',
                 DB::raw('count(*) as count'),
             ])
-            ->groupBy('country');
+            ->groupBy('country')
+            ->orderByDesc('count');
+
+        if($search = request('search', null))
+            $q->whereLike('country', '%'.$search.'%');
+
+        return $q;
     }
 
     protected function pages(): array
